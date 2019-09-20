@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace ESPNBot
@@ -18,7 +19,6 @@ namespace ESPNBot
 
         public Player[] starters = new Player[9];
         public Player[] bench = new Player[7];
-        public List<Player> droppedPlayers;
 
         public Roster(Player[] players)
         {
@@ -29,6 +29,8 @@ namespace ESPNBot
             SetStarters(players);
             SetBench(players);
         }
+
+        public Roster(Roster roster) : this(roster.GetPlayers()) {  }
 
         private void SetStarters(Player[] players)
         {
@@ -61,57 +63,132 @@ namespace ESPNBot
             }
         }
 
-        public Player SubOut(int startingSpot, int currWeek)
+        /// <summary>
+        /// Returns a list of candidates from the bench that can potentially sub for a starter
+        /// </summary>
+        /// <param name="sPosition">The position of the starter</param>
+        /// <param name="currWeek">The current week for byes</param>
+        /// <returns></returns>
+        public List<int> BenchCandidates(Position sPosition, int currWeek, bool canUseFlex)
         {
-            if (startingSpot < 0 || startingSpot > 8)
-            {
-                throw new ArgumentOutOfRangeException("startingSpot must be between 0 and 8, inclusive");
-            }
-            Position sPosition = starters[startingSpot].position;
-            Position fPosition1 = sPosition;
-            Position fPosition2 = sPosition;
-
-            if (sPosition.Equals(Position.RunningBack) && starters[6].position.Equals(Position.RunningBack))
-            {
-                fPosition1 = Position.WideReceiver;
-                fPosition2 = Position.TightEnd;
-            } else if (sPosition.Equals(Position.WideReceiver) && starters[6].position.Equals(Position.WideReceiver))
-            {
-                fPosition1 = Position.RunningBack;
-                fPosition2 = Position.TightEnd;
-            } else if (sPosition.Equals(Position.TightEnd) && starters[6].position.Equals(Position.TightEnd))
-            {
-                fPosition1 = Position.WideReceiver;
-                fPosition2 = Position.RunningBack;
-            }
+            bool canFlex = sPosition.Equals(starters[6].position);
 
             List<int> potential = new List<int>();
             for (int i = 0; i < bench.Length; i++)
             {
-                if (bench[i].position.Equals(sPosition) || bench[i].position.Equals(fPosition1) || bench[i].position.Equals(fPosition2))
+                if (bench[i].position.Equals(sPosition) || (canFlex && canUseFlex && IsFlexPosition(bench[i].position)))
                 {
-                    if (isPlaying(bench[i], currWeek))
+                    if (bench[i].IsPlaying(currWeek))
                     {
                         potential.Add(i);
                     }
                 }
             }
-            return null;
+
+            return potential;
         }
 
-        public bool isPlaying(Player p, int currWeek)
+        private bool IsFlexPosition(Position p)
         {
-            if (p.byeWeek == currWeek)
-            {
-                return false;
-            }
+            return p.Equals(Position.RunningBack) || p.Equals(Position.WideReceiver) ||
+                p.Equals(Position.TightEnd);
+        }
 
-            if (!p.eligibility.Equals(Eligibility.AOK))
+        /// <summary>
+        /// Swap Player a out for Player b
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        public void SwapPlayers(Player a, Player b)
+        {
+            int pa = GetPlayerSlot(a);
+            int pb = GetPlayerSlot(b);
+            
+            if (pa < -1)
             {
-                return true;
+                throw new ArgumentOutOfRangeException("Player a must be on the roster");
             }
+            if (pa < 9)
+            {
+                starters[pa] = b;
+            } else
+            {
+                bench[pa - 9] = b;
+            }
+            if (!(pb < 0))
+            {
+                if (pb < 9)
+                {
+                    starters[pb] = a;
+                } else
+                {
+                    bench[pb - 9] = a;
+                }
+            }
+        }
 
-            return true;
+        /// <summary>
+        /// Gets the slot that a player is in the roster
+        /// </summary>
+        /// <param name="p">A player</param>
+        /// <returns>The slot from 0-15 of the player, or -1 if not found</returns>
+        public int GetPlayerSlot(Player p)
+        {
+            int i = 0;
+            while (i < 9)
+            {
+                if (starters[i].Equals(p))
+                {
+                    return i;
+                }
+                i++;
+            }
+            while (i < 16)
+            {
+                if (bench[i - 9].Equals(p))
+                {
+                    return i;
+                }
+                i++;
+            }
+            return -1;
+        }
+
+        public Player GetPlayer(int slot)
+        {
+            if (slot < 0 || slot > 15)
+            {
+                throw new ArgumentOutOfRangeException("Slot must be between 0 and 15, inclusive");
+            }
+            if (slot < 9)
+            {
+                return starters[slot];
+            } else
+            {
+                return bench[slot - 9];
+            }
+        }
+
+        public List<int> IneligibleStarters(int currWeek)
+        {
+            var players = new List<int>();
+            for (int i = 0; i < 9; i++)
+            {
+                var starter = starters[i];
+                if (starter.byeWeek == currWeek || starter.eligibility != Eligibility.AOK)
+                {
+                    players.Add(i);
+                }
+            }
+            return players;
+        }
+
+        public Player[] GetPlayers()
+        {
+            Player[] players = new Player[16];
+            Array.Copy(starters, players, 9);
+            Array.Copy(bench, 0, players, 9, 7);
+            return players;
         }
     }
 }

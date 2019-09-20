@@ -11,6 +11,7 @@ namespace ESPNBot
         RunningBack,
         Kicker,
         Defense,
-        TightEnd
+        TightEnd,
+        Flex
     }
 }
