@@ -118,9 +118,22 @@ namespace ESPNBot
                 }
             }
 
+            int failThreshold = 2;
             while (actions.Any())
             {
-                actions.Dequeue().Invoke();
+                try
+                {
+                    Action action = actions.Dequeue();
+                    action.Invoke();
+                } catch
+                {
+                    //log action
+                    failThreshold--;
+                    if (failThreshold == 0)
+                    {
+                        throw new Exception(failThreshold + " actions could not be performed");
+                    }
+                }
             }
             roster = new Roster(espnTeam.GetPlayers());
         }

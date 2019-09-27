@@ -30,6 +30,7 @@ namespace ESPNBot
         public int byeWeek;
         public Position position;
         public double projected;
+        public bool isMovable;
 
         public static Player NullPlayer(Position p)
         {
@@ -41,23 +42,25 @@ namespace ESPNBot
 
         public Player() { }
 
-        public Player(string name, string team, Eligibility eligibility, Position position, double projected)
+        public Player(string name, string team, Eligibility eligibility, Position position, double projected, bool isMovable)
         {
             this.name = name;
             this.team = team;
             this.eligibility = eligibility;
             this.position = position;
             this.projected = projected;
+            this.isMovable = isMovable;
             byeWeek = Team.GetByeWeek(team);
         }
 
-        public Player(string name, string team, string eligibility, string position, double projected)
+        public Player(string name, string team, string eligibility, string position, double projected, bool isMovable)
         {
             this.name = name;
             this.team = team;
             this.eligibility = GetEligibility(eligibility);
             this.position = GetPosition(position);
             this.projected = projected;
+            this.isMovable = isMovable;
             byeWeek = Team.GetByeWeek(team);
         }
 

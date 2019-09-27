@@ -102,25 +102,27 @@ namespace ESPNBot
 
             WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(4));
             var table = navigator.GetTable();
-            try
+            
+            var td1 = navigator.GetRow(table, s1);
+            Thread.Sleep(1000);
+            if (navigator.IsRosterClickable(td1))
             {
-                var td1 = navigator.GetRow(table, s1);
-                Thread.Sleep(1000);
                 navigator.ClickRosterAction(td1);
-            } catch
+            } else
             {
-                logger.Error($"Player {s1} could not be moved");
-                throw new ArgumentException(s1 + " cannot be moved");
+                throw new ArgumentException("Row " + s1 + " cannot be moved");
             }
-            try
+
+            var td2 = navigator.GetRow(table, s2);
+            Thread.Sleep(1000);
+            if (navigator.IsRosterClickable(td2))
             {
-                var td2 = navigator.GetRow(table, s2);
-                Thread.Sleep(1000);
                 navigator.ClickRosterAction(td2);
-            } catch
+            }
+            else
             {
-                logger.Error($"Player {s2} could not be moved");
-                throw new ArgumentException(s2 + " cannot be moved");
+                navigator.ClickRosterAction(td1);
+                throw new ArgumentException("Row " + s2 + " cannot be moved");
             }
 
             Thread.Sleep(3000);
@@ -147,35 +149,13 @@ namespace ESPNBot
             }
             if (!isLoggedIn)
             {
-                //LogIn();
+                LogIn();
             }
 
             Player[] players = new Player[16];
-            //WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(4));
             var table = navigator.GetTable();
             foreach(var row in table.FindElements(By.XPath("./tr")))
             {
-                /*Int32.TryParse(row.GetAttribute("data-idx"), out int idx);
-                if (idx == 9)
-                {
-                    continue;
-                }
-                if (idx >= 9) idx--;
-                string elg = "AOK";
-                var pBioBox = row.FindElement(By.XPath("./td[2]/div/div/div[2]/div"));
-                string name = pBioBox.FindElement(By.XPath("./div[1]")).GetAttribute("title");
-                var nameSpans = pBioBox.FindElements(By.XPath("./div[1]/span"));
-                if (nameSpans.Count == 3)
-                {
-                    elg = nameSpans[1].GetAttribute("title");
-                }
-                var detailSpan = pBioBox.FindElements(By.XPath("./div[2]/span"));
-                string team = detailSpan[0].Text;
-                string pos = detailSpan[1].Text;
-                string proj = row.FindElement(By.XPath("./td[6]/div/span")).Text;
-                Double.TryParse(proj, out double projected);
-
-                players[idx] = new Player(name, team, elg, pos, projected);*/
                 Int32.TryParse(row.GetAttribute("data-idx"), out int idx);
                 if (idx == 9) continue;
                 if (idx > 9) idx--;

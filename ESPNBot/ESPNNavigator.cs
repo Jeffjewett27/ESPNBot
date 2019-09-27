@@ -67,25 +67,28 @@ namespace ESPNBot
         {
             int pBioBoxDivNum = 0;
             int projDivNum = 0;
+            bool isMovable = false;
             switch (type)
             {
                 case PlayerTable.FreeAgent:
                     pBioBoxDivNum = 1;
                     projDivNum = 6;
+                    isMovable = IsFreeAgentClickable(row);
                     break;
                 case PlayerTable.Roster:
                     pBioBoxDivNum = 2;
                     projDivNum = 6;
+                    isMovable = IsFreeAgentClickable(row);
                     break;
             }
             var pBioBox = row.FindElement(By.XPath($"td[{pBioBoxDivNum}]/div/div/div[2]/div"));
             var pBio = ReadPlayerBioBox(pBioBox);
-
+            
 
             string proj = row.FindElement(By.XPath($"./td[{projDivNum}]/div/span")).Text;
             Double.TryParse(proj, out double projected);
 
-            return new Player(pBio.Item1, pBio.Item2, pBio.Item3, pBio.Item4, projected);
+            return new Player(pBio.Item1, pBio.Item2, pBio.Item3, pBio.Item4, projected, isMovable);
         }
 
         public Tuple<string, string, string, string> ReadPlayerBioBox(IWebElement pBioBox)
@@ -122,6 +125,31 @@ namespace ESPNBot
         {
             var buttonNav = row.FindElement(By.XPath("./td[3]/div/div/button"));
             buttonNav.Click();
+        }
+
+        public bool IsFreeAgentClickable(IWebElement row)
+        {
+            try
+            {
+                row.FindElement(By.XPath("./td[3]/div/div/div/button[@title='Add']"));
+            } catch
+            {
+                return false;
+            }
+            return true;
+        }
+
+        public bool IsRosterClickable(IWebElement row)
+        {
+            try
+            {
+                row.FindElement(By.XPath("./td[3]/div/div/button"));
+            }
+            catch
+            {
+                return false;
+            }
+            return true;
         }
 
         public void LogIn()
