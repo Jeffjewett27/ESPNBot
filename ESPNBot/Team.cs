@@ -20,7 +20,7 @@ namespace ESPNBot
             { "DAL", 8 },
             { "DEN", 10 },
             { "DET", 5 },
-            { "GBP", 11 },
+            { "GB", 11 },
             { "HOU", 10 },
             { "IND", 6 },
             { "JAX", 10 },
@@ -40,12 +40,12 @@ namespace ESPNBot
             { "SEA", 11 },
             { "TB", 7 },
             { "TEN", 11 },
-            { "WSH", 4 },
+            { "WSH", 10 },
         };
 
         public static int GetByeWeek(string team)
         {
-            if (byeWeeks.TryGetValue(team, out int week))
+            if (byeWeeks.TryGetValue(team.ToUpper(), out int week))
             {
                 return week;
             } else

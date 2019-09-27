@@ -154,5 +154,14 @@ namespace ESPNBot
             Assert.AreEqual(manager.Roster.starters[5], george);
             Assert.AreEqual(manager.Roster.starters[1], quinn);
         }
+
+        [Test]
+        public void TestLoginInfo()
+        {
+            string username = LoginInfo.GetUsername();
+            string password = LoginInfo.GetPassword();
+
+            Assert.AreEqual(username, "jjewett@bcsmail.org");
+        }
     }
 }

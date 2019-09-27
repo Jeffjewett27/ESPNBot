@@ -9,6 +9,7 @@ namespace ESPNBot
         AOK,
         Questionable,
         Out,
-        Injured
+        Injured,
+        Suspended
     }
 }

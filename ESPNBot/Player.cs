@@ -6,6 +6,24 @@ namespace ESPNBot
 {
     class Player : IComparable<Player>, IEquatable<Player>
     {
+        private static Dictionary<string, Position> positionMap = new Dictionary<string, Position>() {
+            { "QB", Position.Quarterback },
+            { "RB", Position.RunningBack },
+            { "WR", Position.WideReceiver },
+            { "TE", Position.TightEnd },
+            { "K", Position.Kicker },
+            { "D/ST", Position.Defense }
+        };
+
+        private static Dictionary<string, Eligibility> eligibilityMap = new Dictionary<string, Eligibility>()
+        {
+            { "AOK", Eligibility.AOK },
+            { "Questionable", Eligibility.Questionable },
+            { "Injured", Eligibility.Injured },
+            { "Out", Eligibility.Out },
+            { "Suspended", Eligibility.Suspended }
+        };
+
         public string name;
         public string team;
         public Eligibility eligibility;
@@ -19,6 +37,28 @@ namespace ESPNBot
             {
                 position = p
             };
+        }
+
+        public Player() { }
+
+        public Player(string name, string team, Eligibility eligibility, Position position, double projected)
+        {
+            this.name = name;
+            this.team = team;
+            this.eligibility = eligibility;
+            this.position = position;
+            this.projected = projected;
+            byeWeek = Team.GetByeWeek(team);
+        }
+
+        public Player(string name, string team, string eligibility, string position, double projected)
+        {
+            this.name = name;
+            this.team = team;
+            this.eligibility = GetEligibility(eligibility);
+            this.position = GetPosition(position);
+            this.projected = projected;
+            byeWeek = Team.GetByeWeek(team);
         }
 
         public int CompareTo(Player other)
@@ -61,6 +101,30 @@ namespace ESPNBot
         public override string ToString()
         {
             return name + ": " + position.ToString() + "(" + team +")";
+        }
+
+        private Position GetPosition(string pos)
+        {
+            if (positionMap.TryGetValue(pos, out Position position))
+            {
+                return position;
+            }
+            else
+            {
+                throw new ArgumentException(pos + " is not a valid position");
+            }
+        }
+
+        private Eligibility GetEligibility(string elg)
+        {
+            if (eligibilityMap.TryGetValue(elg, out Eligibility eligibility))
+            {
+                return eligibility;
+            }
+            else
+            {
+                throw new ArgumentException(elg + " is not a valid eligibility");
+            }
         }
     }
 }

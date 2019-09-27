@@ -117,15 +117,21 @@ namespace ESPNBot
             action.MoveToElement(loginElement).Perform();
             Thread.Sleep(100);
             action.Click(loginElement).Perform();
-
-            /*Thread.Sleep(2000);
+            Thread.Sleep(2000);
             //var usernameElement = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
             //By.XPath("//*[@id='did-ui-view']/div/section/section/form/section/div[1]/div/label/span[2]/input")));
-            var usernameElement = driver.FindElement(By.XPath("//*[@id='did-ui-view']/div/section/section/form/section/div[1]/div/label/span[2]/input"));
+            //var usernameElement = driver.FindElement(By.XPath("//*[@id='did-ui-view']/div/section/section/form/section/div[1]/div/label/span[2]/input"));
+            driver.SwitchTo().Frame("disneyid-iframe");
+            var usernameElement = driver.FindElement(By.XPath("//input[@placeholder='Username or Email Address']"));
+            usernameElement.SendKeys(LoginInfo.GetUsername());
+            Thread.Sleep(150);
+            var passwordElement = driver.FindElement(By.XPath("//input[@placeholder='Password (case sensitive)']"));
+            passwordElement.SendKeys(LoginInfo.GetPassword());
+            passwordElement.SendKeys(Keys.Enter);
             ////*[@id="did-ui-view"]/div/section/section/form/section/div[1]/div/label/span[2]/input
-            action.SendKeys(usernameElement, "jjewett@bcsmail.org").Perform();
+            //action.SendKeys(usernameElement, "jjewett@bcsmail.org").Perform();
 
-            Thread.Sleep(2000);*/
+            Thread.Sleep(2000);
         }
 
         [TearDown]
