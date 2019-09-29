@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using NUnit.Framework;
+using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
 
 namespace ESPNBot
@@ -57,15 +58,32 @@ namespace ESPNBot
         [Test]
         public void NavigatorFreeAgent()
         {
-            var driver = new ChromeDriver(@"C:\Program Files")
+            using (var test = new ESPNTeam())
             {
-                Url = "https://fantasy.espn.com/football/team?leagueId=61483480&teamId=10&seasonId=2019"
-            };
+                test.AddFreeAgent(Position.Kicker, new Player("Robbie Gould", "SF", Eligibility.AOK, Position.Kicker, 0, true));
+            }
+        }
 
+        [Test]
+        public void JavascriptTest()
+        {
+            ChromeDriver driver = new ChromeDriver(@"C:/Program Files");
+            driver.Url = "https://fantasy.espn.com/football/team?leagueId=61483480&teamId=10";
+
+            var executor = (IJavaScriptExecutor)driver;
+            /*for (int i = 0; i < 4; i++)
+            {
+                executor.ExecuteScript("window.scrollBy(0,200)");
+                Thread.Sleep(1000);
+            }
+            driver.Close();*/
             var navigator = new ESPNNavigator(driver);
-            navigator.LogIn();
             var table = navigator.GetTable();
-            
+            var row = navigator.GetRow(table, 15);
+            navigator.ScrollElementIntoView(row);
+            row = navigator.GetRow(table, 1);
+            navigator.ScrollElementIntoView(row);
+            driver.Close();
         }
     }
 }

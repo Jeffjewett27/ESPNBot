@@ -17,8 +17,9 @@ namespace ESPNBot
             this.freeAgents = freeAgents;
         }
 
-        public void AddFreeAgent(Position pos, int slot)
+        public void AddFreeAgent(Position pos, Player p)
         {
+            throw new NotImplementedException("Under maintenance");
             List<Player> agents = new List<Player>();
             foreach (Player f in freeAgents)
             {
@@ -29,7 +30,7 @@ namespace ESPNBot
             }
             agents.Sort();
             Player picked = agents[agents.Count - 1];
-            roster.SwapPlayers(roster.GetPlayer(slot), picked);
+            //roster.SwapPlayers(roster.GetPlayer(slot), picked);
         }
 
         public Player GetPlayer(int slot)

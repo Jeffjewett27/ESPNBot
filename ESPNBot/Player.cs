@@ -19,7 +19,7 @@ namespace ESPNBot
         {
             { "AOK", Eligibility.AOK },
             { "Questionable", Eligibility.Questionable },
-            { "Injured", Eligibility.Injured },
+            { "Injured Reserve", Eligibility.Injured },
             { "Out", Eligibility.Out },
             { "Suspended", Eligibility.Suspended }
         };

@@ -44,17 +44,56 @@ namespace ESPNBot
                 By.XPath("//tbody[@class='Table2__tbody']")));
         }
 
+        public IWebElement GetTable(int n)
+        {
+            var tables = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.PresenceOfAllElementsLocatedBy(
+                By.XPath("//tbody[@class='Table2__tbody']")));
+            if (n < tables.Count)
+            {
+                return tables[n];
+            }
+            else
+            {
+                throw new ArgumentOutOfRangeException("Table " + n + " does not reference any table on the page");
+            }
+        }
+
+        public bool TableExists()
+        {
+            return TableExists(0);
+        }
+
+        public bool TableExists(int n)
+        {
+            try
+            {
+                var tables = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.PresenceOfAllElementsLocatedBy(
+                    By.XPath("//tbody[@class='Table2__tbody']")));
+                return tables.Count > n;
+            } catch
+            {
+                return false;
+            }
+            
+        }
+
         public IWebElement GetRow(IWebElement table, int idx)
         {
             return table.FindElement(By.XPath($"./tr[@data-idx='{idx}']"));
-            /*try
+        }
+
+        public IWebElement GetRow(IWebElement table, Player player, PlayerTable type)
+        {
+            var rows = table.FindElements(By.XPath($"./tr"));
+            foreach (var row in rows)
             {
-                
+                Player p = ReadPlayerRow(row, type);
+                if (p.name == player.name)
+                {
+                    return row;
+                }
             }
-            catch
-            {
-                throw new ArgumentException("Row " + idx + " in table could not be found");
-            }*/
+            throw new NotFoundException("Player " + player + " not found in table");
         }
 
         public Player ReadPlayerRow(IWebElement table, int id, PlayerTable type)
@@ -111,20 +150,24 @@ namespace ESPNBot
             positionMap.TryGetValue(pos, out string posAbbr);
 
             var posTab = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
-                By.XPath($"//div[@id='filterSlotIds']/label[text()='{posAbbr}'")));
+                By.XPath($"//div[@id='filterSlotIds']/label[text()='{posAbbr}']")));
+            ScrollElementIntoView(posTab);
             posTab.Click();
         }
 
         public void ClickFreeAgentAction(IWebElement row)
         {
             var buttonNav = row.FindElement(By.XPath("./td[3]/div/div/div/button[1]"));
+            ScrollElementIntoView(buttonNav);
             buttonNav.Click();
         }
 
         public void ClickRosterAction(IWebElement row)
         {
             var buttonNav = row.FindElement(By.XPath("./td[3]/div/div/button"));
+            ScrollElementIntoView(buttonNav);
             buttonNav.Click();
+            
         }
 
         public bool IsFreeAgentClickable(IWebElement row)
@@ -180,6 +223,46 @@ namespace ESPNBot
             driver.Navigate().Refresh();
             wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
                 By.XPath("//*[@id='espn-analytics']/div/div[2]/div/div/nav/ul[3]/li[2]/div[1]")));
+        }
+
+        public void ClickContinue()
+        {
+            var continueButton = driver.FindElement(By.XPath("//button/span[text()='Continue']"));
+            ScrollElementIntoView(continueButton);
+            continueButton.Click();
+        }
+
+        public void ClickCancel()
+        {
+            var cancelButton = driver.FindElement(By.XPath("//button/span[text()='Cancel']"));
+            ScrollElementIntoView(cancelButton);
+            cancelButton.Click();
+        }
+
+        public void ClickConfirm()
+        {
+            var confirmButton = driver.FindElement(By.XPath("//button/span[text()='Confirm']"));
+            ScrollElementIntoView(confirmButton);
+            confirmButton.Click();
+        }
+
+        public void ScrollElementIntoView(IWebElement element)
+        {
+            var executor = (IJavaScriptExecutor)driver;
+            /*string jsQuery = @"var el = arguments[0];
+                 var elOffset = $(el).offset().top;
+                var elHeight = el.height();
+                var elCenter = elOffset + elHeight / 2;
+                var windowCenter = $(window).height() / 2;
+                var windowOffset = window.scrollYOffset;
+                return elCenter - windowCenter + windowOffset; ";*/
+            string getScrollValue = @"
+                var elY = arguments[0].getBoundingClientRect().y;
+                var winH = window.innerHeight;
+                var scroll = elY - winH / 2;
+                window.scrollBy(0, scroll);";
+
+            executor.ExecuteScript(getScrollValue, element);
         }
     }
 }

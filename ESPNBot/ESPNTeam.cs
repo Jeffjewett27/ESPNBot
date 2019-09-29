@@ -8,6 +8,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using NLog;
+using static ESPNBot.ESPNNavigator;
 
 namespace ESPNBot
 {
@@ -39,7 +40,7 @@ namespace ESPNBot
             //CloseBrowser();
         }
 
-        public void AddFreeAgent(Position pos, int slot)
+        public void AddFreeAgent(Position pos, Player dropPlayer)
         {
             if (url != FREE_AGENTS_URL)
             {
@@ -68,8 +69,33 @@ namespace ESPNBot
             }
             var bestRow = navigator.GetRow(table, bestId);
             navigator.ClickFreeAgentAction(bestRow);
-
+            Thread.Sleep(1500);
             //then proceeed to swap with player in slot
+            int n = 1;
+            IWebElement row = null;
+            while (navigator.TableExists(n))
+            {
+                table = navigator.GetTable(n);
+                try
+                {
+                    row = navigator.GetRow(table, dropPlayer, PlayerTable.Roster);
+                    break;
+                } catch { }
+                n++;
+            }
+
+            if (row == null)
+            {
+                navigator.ClickCancel();
+                throw new NotFoundException("Player " + dropPlayer + " could not be located to be dropped");
+            }
+
+            navigator.ClickRosterAction(row);
+            Thread.Sleep(1000);
+            navigator.ClickContinue();
+            Thread.Sleep(2000);
+            navigator.ClickConfirm();
+            
         }
 
         public Player GetPlayer(int slot)
@@ -159,7 +185,7 @@ namespace ESPNBot
                 Int32.TryParse(row.GetAttribute("data-idx"), out int idx);
                 if (idx == 9) continue;
                 if (idx > 9) idx--;
-                players[idx] = navigator.ReadPlayerRow(row, ESPNNavigator.PlayerTable.Roster);
+                players[idx] = navigator.ReadPlayerRow(row, PlayerTable.Roster);
             }
 
             roster = new Roster(players);

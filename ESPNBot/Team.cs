@@ -41,6 +41,7 @@ namespace ESPNBot
             { "TB", 7 },
             { "TEN", 11 },
             { "WSH", 10 },
+            { "FA", 0 }
         };
 
         public static int GetByeWeek(string team)

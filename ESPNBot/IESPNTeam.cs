@@ -10,6 +10,6 @@ namespace ESPNBot
         Player GetPlayer(int slot);
         void UpdatePlayer(Player player);
         void SwapPlayers(int s1, int s2);
-        void AddFreeAgent(Position pos, int slot);
+        void AddFreeAgent(Position pos, Player player);
     }
 }

@@ -86,13 +86,13 @@ namespace ESPNBot
                         Action action;
                         if (starter.CompareTo(worst) < 0)
                         {
-                            action = () => espnTeam.AddFreeAgent(starter.position, s);
+                            action = () => espnTeam.AddFreeAgent(starter.position, starter);
                             actions.Enqueue(action);
                             roster.SwapPlayers(starter, Player.NullPlayer(starter.position));
                         } else
                         {
                             int slot = roster.GetPlayerSlot(worst);
-                            action = () => espnTeam.AddFreeAgent(sub.position, slot);
+                            action = () => espnTeam.AddFreeAgent(sub.position, worst);
                             actions.Enqueue(action);
                             Player nullP = Player.NullPlayer(sub.position);
                             roster.SwapPlayers(worst, nullP);
