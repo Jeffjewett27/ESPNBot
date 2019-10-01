@@ -198,7 +198,9 @@ namespace ESPNBot
 
         private void StartBrowser()
         {
-            driver = new ChromeDriver(@"C:\Program Files");
+            //ChromeOptions options = new ChromeOptions();
+            //options.AddArgument("headless");
+            driver = new ChromeDriver(@"C:\Program Files", options);
         }
 
         private void CloseBrowser()
