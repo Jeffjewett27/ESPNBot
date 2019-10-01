@@ -7,6 +7,7 @@ using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Interactions;
 using OpenQA.Selenium.Support.UI;
 using SeleniumExtras.WaitHelpers;
+using NLog;
 
 namespace ESPNBot
 {
@@ -23,8 +24,11 @@ namespace ESPNBot
             { Position.Flex, "FLEX" }
         };
 
+        private static readonly NLog.Logger logger = LogManager.GetCurrentClassLogger();
+
         private ChromeDriver driver;
         private WebDriverWait wait;
+        private BrowserWait browserWait;
 
         public enum PlayerTable
         {
@@ -36,6 +40,7 @@ namespace ESPNBot
         {
             this.driver = driver;
             wait = new WebDriverWait(driver, TimeSpan.FromSeconds(4));
+            browserWait = new BrowserWait(1000, 450);
         }
 
         public IWebElement GetTable()
@@ -54,6 +59,7 @@ namespace ESPNBot
             }
             else
             {
+                logger.Error("Table " + n + " does not reference any table on the page");
                 throw new ArgumentOutOfRangeException("Table " + n + " does not reference any table on the page");
             }
         }
@@ -93,6 +99,7 @@ namespace ESPNBot
                     return row;
                 }
             }
+            logger.Error("Player " + player + " not found in table");
             throw new NotFoundException("Player " + player + " not found in table");
         }
 
@@ -153,6 +160,7 @@ namespace ESPNBot
                 By.XPath($"//div[@id='filterSlotIds']/label[text()='{posAbbr}']")));
             ScrollElementIntoView(posTab);
             posTab.Click();
+            browserWait.Wait();
         }
 
         public void ClickFreeAgentAction(IWebElement row)
@@ -160,6 +168,7 @@ namespace ESPNBot
             var buttonNav = row.FindElement(By.XPath("./td[3]/div/div/div/button[1]"));
             ScrollElementIntoView(buttonNav);
             buttonNav.Click();
+            browserWait.Wait();
         }
 
         public void ClickRosterAction(IWebElement row)
@@ -167,6 +176,7 @@ namespace ESPNBot
             var buttonNav = row.FindElement(By.XPath("./td[3]/div/div/button"));
             ScrollElementIntoView(buttonNav);
             buttonNav.Click();
+            browserWait.Wait();
             
         }
 
@@ -218,7 +228,7 @@ namespace ESPNBot
             passwordElement.SendKeys(LoginInfo.GetPassword());
             passwordElement.SendKeys(Keys.Enter);
 
-            Thread.Sleep(2000);
+            browserWait.Wait();
 
             driver.Navigate().Refresh();
             wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
@@ -230,6 +240,7 @@ namespace ESPNBot
             var continueButton = driver.FindElement(By.XPath("//button/span[text()='Continue']"));
             ScrollElementIntoView(continueButton);
             continueButton.Click();
+            browserWait.Wait();
         }
 
         public void ClickCancel()
@@ -237,6 +248,7 @@ namespace ESPNBot
             var cancelButton = driver.FindElement(By.XPath("//button/span[text()='Cancel']"));
             ScrollElementIntoView(cancelButton);
             cancelButton.Click();
+            browserWait.Wait();
         }
 
         public void ClickConfirm()
@@ -244,18 +256,12 @@ namespace ESPNBot
             var confirmButton = driver.FindElement(By.XPath("//button/span[text()='Confirm']"));
             ScrollElementIntoView(confirmButton);
             confirmButton.Click();
+            browserWait.Wait();
         }
 
         public void ScrollElementIntoView(IWebElement element)
         {
             var executor = (IJavaScriptExecutor)driver;
-            /*string jsQuery = @"var el = arguments[0];
-                 var elOffset = $(el).offset().top;
-                var elHeight = el.height();
-                var elCenter = elOffset + elHeight / 2;
-                var windowCenter = $(window).height() / 2;
-                var windowOffset = window.scrollYOffset;
-                return elCenter - windowCenter + windowOffset; ";*/
             string getScrollValue = @"
                 var elY = arguments[0].getBoundingClientRect().y;
                 var winH = window.innerHeight;
@@ -263,6 +269,7 @@ namespace ESPNBot
                 window.scrollBy(0, scroll);";
 
             executor.ExecuteScript(getScrollValue, element);
+            browserWait.Wait();
         }
     }
 }

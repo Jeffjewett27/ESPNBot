@@ -5,9 +5,9 @@ using NLog;
 
 namespace ESPNBot
 {
-    class Logger
+    static class Logger
     {
-        public Logger()
+        public static void Configure()
         {
             var config = new NLog.Config.LoggingConfiguration();
 
@@ -16,13 +16,11 @@ namespace ESPNBot
             var logconsole = new NLog.Targets.ConsoleTarget("logconsole");
 
             // Rules for mapping loggers to targets            
-            config.AddRule(LogLevel.Info, LogLevel.Fatal, logconsole);
-            config.AddRule(LogLevel.Info, LogLevel.Fatal, logfile);
             config.AddRule(LogLevel.Debug, LogLevel.Fatal, logconsole);
             config.AddRule(LogLevel.Debug, LogLevel.Fatal, logfile);
 
             // Apply config           
-            NLog.LogManager.Configuration = config;
+            LogManager.Configuration = config;
         }
     }
 }

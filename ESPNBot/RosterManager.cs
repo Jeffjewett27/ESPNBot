@@ -2,11 +2,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using NLog;
 
 namespace ESPNBot
 {
     class RosterManager
     {
+        private static readonly NLog.Logger logger = LogManager.GetCurrentClassLogger();
         private Roster roster;
         private IESPNTeam espnTeam;
         private Queue<Action> actions;
@@ -24,6 +26,7 @@ namespace ESPNBot
         {
             if (startingSpot < 0 || startingSpot > 8)
             {
+                
                 throw new ArgumentOutOfRangeException("startingSpot must be between 0 and 8, inclusive");
             }
             Position sPosition = roster.starters[startingSpot].position;
@@ -71,6 +74,7 @@ namespace ESPNBot
 
         public void ManageTeam(int currWeek)
         {
+            logger.Info("Managing team for week " + currWeek);
             var inelligible = roster.IneligibleStarters(currWeek);
 
             if (inelligible.Count > 0)
@@ -86,11 +90,13 @@ namespace ESPNBot
                         Action action;
                         if (starter.CompareTo(worst) < 0)
                         {
+                            logger.Info(starter + "requires a free agent. " + starter + " is being dropped from roster");
                             action = () => espnTeam.AddFreeAgent(starter.position, starter);
                             actions.Enqueue(action);
                             roster.SwapPlayers(starter, Player.NullPlayer(starter.position));
                         } else
                         {
+                            logger.Info(starter + "is being benched. " + worst + " is being dropped from roster for free agent.");
                             int slot = roster.GetPlayerSlot(worst);
                             action = () => espnTeam.AddFreeAgent(sub.position, worst);
                             actions.Enqueue(action);
@@ -107,10 +113,12 @@ namespace ESPNBot
                         int slot = roster.GetPlayerSlot(sub);
                         if (!sub.position.Equals(starter.position))
                         {
+                            logger.Info(sub + " is swapping with flex " + starter);
                             roster.SwapPlayers(roster.starters[6], sub);
                             action = () => espnTeam.SwapPlayers(6, slot);
                             actions.Enqueue(action);
                         }
+                        logger.Info(starter + " is swapping with " + roster.GetPlayer(slot));
                         roster.SwapPlayers(roster.starters[s], roster.GetPlayer(slot));
                         action = () => espnTeam.SwapPlayers(s, slot);
                         actions.Enqueue(action);
@@ -119,6 +127,7 @@ namespace ESPNBot
             }
 
             int failThreshold = 2;
+            int fails = 0;
             while (actions.Any())
             {
                 try
@@ -127,11 +136,14 @@ namespace ESPNBot
                     action.Invoke();
                 } catch
                 {
-                    //log action
-                    failThreshold--;
-                    if (failThreshold == 0)
+                    fails++;
+                    if (fails == failThreshold)
                     {
+                        logger.Fatal(fails + " actions produced errors, exceeding the allowable quantity");
                         throw new Exception(failThreshold + " actions could not be performed");
+                    } else
+                    {
+                        logger.Error("A roster action could not be performed. This is allowable error " + fails + "/" + (failThreshold - 1));
                     }
                 }
             }

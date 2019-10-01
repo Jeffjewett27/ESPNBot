@@ -5,6 +5,7 @@ using System.Threading;
 using NUnit.Framework;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
+using NLog;
 
 namespace ESPNBot
 {
@@ -16,7 +17,7 @@ namespace ESPNBot
         {
             using (var test = new ESPNTeam())
             {
-                Logger l = new Logger();
+                Logger.Configure();
                 Player[] players = test.GetPlayers();
                 Roster roster = new Roster(players);
                 int count = players.Length;
@@ -84,6 +85,14 @@ namespace ESPNBot
             row = navigator.GetRow(table, 1);
             navigator.ScrollElementIntoView(row);
             driver.Close();
+        }
+
+        [Test]
+        public void LoggerTest()
+        {
+            Logger.Configure();
+            NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+            logger.Info("hello world");
         }
     }
 }

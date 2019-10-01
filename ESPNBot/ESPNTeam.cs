@@ -51,11 +51,9 @@ namespace ESPNBot
             {
                 LogIn();
             }
-
             navigator.ClickPositionTab(pos);
 
             var table = navigator.GetTable();
-
             Player best = null;
             int bestId = 0;
             for (int i = 0; i < 10; i++)
@@ -67,10 +65,10 @@ namespace ESPNBot
                     bestId = i;
                 }
             }
+            logger.Info("Selected free agent " + best);
             var bestRow = navigator.GetRow(table, bestId);
             navigator.ClickFreeAgentAction(bestRow);
-            Thread.Sleep(1500);
-            //then proceeed to swap with player in slot
+
             int n = 1;
             IWebElement row = null;
             while (navigator.TableExists(n))
@@ -87,14 +85,14 @@ namespace ESPNBot
             if (row == null)
             {
                 navigator.ClickCancel();
+                logger.Error("Player " + dropPlayer + " could not be located to be dropped");
                 throw new NotFoundException("Player " + dropPlayer + " could not be located to be dropped");
             }
 
             navigator.ClickRosterAction(row);
-            Thread.Sleep(1000);
             navigator.ClickContinue();
-            Thread.Sleep(2000);
             navigator.ClickConfirm();
+            logger.Info(dropPlayer + "successfully replaced by " + best);
             
         }
 
@@ -130,17 +128,16 @@ namespace ESPNBot
             var table = navigator.GetTable();
             
             var td1 = navigator.GetRow(table, s1);
-            Thread.Sleep(1000);
             if (navigator.IsRosterClickable(td1))
             {
                 navigator.ClickRosterAction(td1);
             } else
             {
+                logger.Error("Row " + s1 + " cannot be moved");
                 throw new ArgumentException("Row " + s1 + " cannot be moved");
             }
 
             var td2 = navigator.GetRow(table, s2);
-            Thread.Sleep(1000);
             if (navigator.IsRosterClickable(td2))
             {
                 navigator.ClickRosterAction(td2);
@@ -148,10 +145,9 @@ namespace ESPNBot
             else
             {
                 navigator.ClickRosterAction(td1);
+                logger.Error("Row " + s2 + " cannot be moved");
                 throw new ArgumentException("Row " + s2 + " cannot be moved");
             }
-
-            Thread.Sleep(3000);
         }
 
         public void UpdatePlayer(Player player)
@@ -161,15 +157,16 @@ namespace ESPNBot
 
         private void LogIn()
         {
-            logger.Info("Logged in");
             navigator.LogIn();
             isLoggedIn = true;
+            logger.Info("Logged in");
         }
 
         private void ReadRoster()
         {
             if (url != ROSTER_URL)
             {
+                logger.Trace("Going to roster page");
                 url = ROSTER_URL;
                 driver.Url = url;
             }
@@ -178,6 +175,7 @@ namespace ESPNBot
                 LogIn();
             }
 
+            logger.Trace("Reading the roster");
             Player[] players = new Player[16];
             var table = navigator.GetTable();
             foreach(var row in table.FindElements(By.XPath("./tr")))
@@ -189,6 +187,13 @@ namespace ESPNBot
             }
 
             roster = new Roster(players);
+            StringBuilder rosterString = new StringBuilder("Roster read:");
+            foreach (Player p in roster.GetPlayers())
+            {
+                rosterString.Append("\n");
+                rosterString.Append(p);
+            }
+            logger.Info(rosterString.ToString());
         }
 
         private void StartBrowser()
