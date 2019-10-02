@@ -44,6 +44,11 @@ namespace ESPNBot
             { "FA", 0 }
         };
 
+        /// <summary>
+        /// Gets the week a team is on bye
+        /// </summary>
+        /// <param name="team">The team</param>
+        /// <returns></returns>
         public static int GetByeWeek(string team)
         {
             if (byeWeeks.TryGetValue(team.ToUpper(), out int week))

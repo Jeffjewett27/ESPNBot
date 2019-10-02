@@ -12,10 +12,13 @@ using static ESPNBot.ESPNNavigator;
 
 namespace ESPNBot
 {
+    /// <summary>
+    /// Manages the interface between roster actions and navigating espn.com
+    /// </summary>
     class ESPNTeam : IESPNTeam, IDisposable
     {
-        private const string ROSTER_URL = "https://fantasy.espn.com/football/team?leagueId=61483480&teamId=10";
-        private const string FREE_AGENTS_URL = "https://fantasy.espn.com/football/players/add?leagueId=61483480";
+        private const string ROSTER_URL = "https://fantasy.espn.com/football/team?leagueId=61483480&teamId=10"; //url to the roster page
+        private const string FREE_AGENTS_URL = "https://fantasy.espn.com/football/players/add?leagueId=61483480"; //url to the free agent page
         private static readonly NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
 
         private ChromeDriver driver;
@@ -27,20 +30,18 @@ namespace ESPNBot
         public ESPNTeam()
         {
             StartBrowser();
-            //url = ROSTER_URL;
-            //driver.Url = url;
-            url = "https://fantasy.espn.com/football/team?leagueId=61483480&teamId=10&seasonId=2019&scoringPeriodId=4&statSplit=singleScoringPeriod";
+            url = ROSTER_URL;
             driver.Url = url;
             navigator = new ESPNNavigator(driver);
-            //LogIn();
         }
 
-        ~ESPNTeam()
-        {
-            //CloseBrowser();
-        }
-
-        public void AddFreeAgent(Position pos, Player dropPlayer)
+        /// <summary>
+        /// Retrieves a free agent for a position and swaps him for a position
+        /// </summary>
+        /// <param name="pos">The position of the player to pick up</param>
+        /// <param name="dropPlayer">The player to drop</param>
+        /// <param name="useWaivers">Whether or not to include players from waivers</param>
+        public void AddFreeAgent(Position pos, Player dropPlayer, bool useWaivers)
         {
             if (url != FREE_AGENTS_URL)
             {
@@ -53,13 +54,16 @@ namespace ESPNBot
             }
             navigator.ClickPositionTab(pos);
 
+            //select new player
             var table = navigator.GetTable();
             Player best = null;
             int bestId = 0;
             for (int i = 0; i < 10; i++)
             {
-                Player p = navigator.ReadPlayerRow(table, i, ESPNNavigator.PlayerTable.FreeAgent);
-                if (best == null || p.CompareTo(best) > 0)
+                var pRow = navigator.GetRow(table, i);
+                Player p = navigator.ReadPlayerRow(pRow, ESPNNavigator.PlayerTable.FreeAgent);
+                bool isClickable = navigator.IsFreeAgentClickable(pRow, useWaivers);
+                if (isClickable && (best == null || p.CompareTo(best) > 0))
                 {
                     best = p;
                     bestId = i;
@@ -69,6 +73,7 @@ namespace ESPNBot
             var bestRow = navigator.GetRow(table, bestId);
             navigator.ClickFreeAgentAction(bestRow);
 
+            //select player to drop
             int n = 1;
             IWebElement row = null;
             while (navigator.TableExists(n))
@@ -88,14 +93,18 @@ namespace ESPNBot
                 logger.Error("Player " + dropPlayer + " could not be located to be dropped");
                 throw new NotFoundException("Player " + dropPlayer + " could not be located to be dropped");
             }
-
+            //confirm action
             navigator.ClickRosterAction(row);
             navigator.ClickContinue();
             navigator.ClickConfirm();
             logger.Info(dropPlayer + "successfully replaced by " + best);
-            
         }
 
+        /// <summary>
+        /// Retrieves the player in the roster slot number
+        /// </summary>
+        /// <param name="slot">The slot to retrieve</param>
+        /// <returns></returns>
         public Player GetPlayer(int slot)
         {
             if (roster == null)
@@ -105,6 +114,10 @@ namespace ESPNBot
             return roster.GetPlayer(slot);
         }
 
+        /// <summary>
+        /// Returns the array of players from espn.com
+        /// </summary>
+        /// <returns></returns>
         public Player[] GetPlayers()
         {
             if (roster == null)
@@ -114,19 +127,27 @@ namespace ESPNBot
             return roster.GetPlayers();
         }
 
+        /// <summary>
+        /// Swaps players from the espn.com roster
+        /// </summary>
+        /// <param name="s1">The first player slotID to swap</param>
+        /// <param name="s2">The second player slotID to swap</param>
         public void SwapPlayers(int s1, int s2)
         {
+            if (s1 == s2)
+            {
+                logger.Error("Attempted to swap slot " + s1 + "with itself");
+                throw new ArgumentOutOfRangeException("Cannot swap slot " + s1 + " with itself");
+            }
             logger.Info($"Swapping Players {s1} and {s2}");
             if (!isLoggedIn)
             {
                 LogIn();
             }
-            s1 += s1 >= 9 ? 1 : 0; //skip the 9th element
+            s1 += s1 >= 9 ? 1 : 0; //skip the 9th element, which is a blank row
             s2 += s2 >= 9 ? 1 : 0;
 
-            WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(4));
             var table = navigator.GetTable();
-            
             var td1 = navigator.GetRow(table, s1);
             if (navigator.IsRosterClickable(td1))
             {
@@ -150,11 +171,32 @@ namespace ESPNBot
             }
         }
 
-        public void UpdatePlayer(Player player)
+        /// <summary>
+        /// Updates the information of a player
+        /// </summary>
+        /// <param name="player">The player to update</param>
+        public Player UpdatePlayer(Player player)
         {
-            throw new NotImplementedException();
+            if (url != ROSTER_URL)
+            {
+                url = ROSTER_URL;
+                driver.Url = url;
+            }
+            if (!isLoggedIn)
+            {
+                LogIn();
+            }
+            int slot = roster.GetPlayerSlot(player);
+            var table = navigator.GetTable();
+            var row = navigator.GetRow(table, player, PlayerTable.Roster);
+            Player updated = navigator.ReadPlayerRow(row, PlayerTable.Roster);
+            roster.ReplacePlayer(slot, updated);
+            return updated;
         }
-
+        
+        /// <summary>
+        /// Logs in to espn.com
+        /// </summary>
         private void LogIn()
         {
             navigator.LogIn();
@@ -162,6 +204,9 @@ namespace ESPNBot
             logger.Info("Logged in");
         }
 
+        /// <summary>
+        /// Reads the roster from espn.com
+        /// </summary>
         private void ReadRoster()
         {
             if (url != ROSTER_URL)
@@ -185,8 +230,9 @@ namespace ESPNBot
                 if (idx > 9) idx--;
                 players[idx] = navigator.ReadPlayerRow(row, PlayerTable.Roster);
             }
-
             roster = new Roster(players);
+
+            //for logging purposes only
             StringBuilder rosterString = new StringBuilder("Roster read:");
             foreach (Player p in roster.GetPlayers())
             {
@@ -196,6 +242,9 @@ namespace ESPNBot
             logger.Info(rosterString.ToString());
         }
 
+        /// <summary>
+        /// Opens the ChomeDriver in headless mode
+        /// </summary>
         private void StartBrowser()
         {
             ChromeOptions options = new ChromeOptions();
@@ -204,6 +253,9 @@ namespace ESPNBot
             driver = new ChromeDriver(@"C:\Program Files", options);
         }
 
+        /// <summary>
+        /// Closes the driver
+        /// </summary>
         private void CloseBrowser()
         {
             driver.Close();

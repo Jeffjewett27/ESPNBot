@@ -11,8 +11,12 @@ using NLog;
 
 namespace ESPNBot
 {
+    /// <summary>
+    /// Performs the actions to navigate espn.com
+    /// </summary>
     class ESPNNavigator
     {
+        //Maps the positions to their espn abbrieviations
         private static Dictionary<Position, string> positionMap = new Dictionary<Position, string>()
         {
             { Position.Quarterback, "QB" },
@@ -30,6 +34,7 @@ namespace ESPNBot
         private WebDriverWait wait;
         private BrowserWait browserWait;
 
+        //defines whether a table represents the roster page or the free agent page (elements are in different orders)
         public enum PlayerTable
         {
             Roster,
@@ -43,12 +48,21 @@ namespace ESPNBot
             browserWait = new BrowserWait(1000, 450);
         }
 
+        /// <summary>
+        /// Gets a table of rows representing players
+        /// </summary>
+        /// <returns></returns>
         public IWebElement GetTable()
         {
             return wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
                 By.XPath("//tbody[@class='Table2__tbody']")));
         }
 
+        /// <summary>
+        /// Gets the nth table of rows representing players
+        /// </summary>
+        /// <param name="n">The table to select, from top of the page to bottom</param>
+        /// <returns></returns>
         public IWebElement GetTable(int n)
         {
             var tables = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.PresenceOfAllElementsLocatedBy(
@@ -64,11 +78,20 @@ namespace ESPNBot
             }
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <returns>Whether a table exists on the screen</returns>
         public bool TableExists()
         {
             return TableExists(0);
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="n">The table to check</param>
+        /// <returns>Whether the nth table exists on the screen</returns>
         public bool TableExists(int n)
         {
             try
@@ -83,11 +106,24 @@ namespace ESPNBot
             
         }
 
+        /// <summary>
+        /// Gets the row from a table with a particular index
+        /// </summary>
+        /// <param name="table">The table to search</param>
+        /// <param name="idx">The index of the row to find</param>
+        /// <returns></returns>
         public IWebElement GetRow(IWebElement table, int idx)
         {
             return table.FindElement(By.XPath($"./tr[@data-idx='{idx}']"));
         }
 
+        /// <summary>
+        /// Gets the row from a table by searching for a player
+        /// </summary>
+        /// <param name="table">The table to search</param>
+        /// <param name="player">The player to find</param>
+        /// <param name="type">The type of tabler</param>
+        /// <returns></returns>
         public IWebElement GetRow(IWebElement table, Player player, PlayerTable type)
         {
             var rows = table.FindElements(By.XPath($"./tr"));
@@ -103,12 +139,25 @@ namespace ESPNBot
             throw new NotFoundException("Player " + player + " not found in table");
         }
 
+        /// <summary>
+        /// Reads the player information from a slot in a table
+        /// </summary>
+        /// <param name="table">The table to read from</param>
+        /// <param name="id">The id of the row to read from</param>
+        /// <param name="type">The type of table</param>
+        /// <returns></returns>
         public Player ReadPlayerRow(IWebElement table, int id, PlayerTable type)
         {
             var row = GetRow(table, id);
             return ReadPlayerRow(row, type);
         }
 
+        /// <summary>
+        /// Reads the player information from a row
+        /// </summary>
+        /// <param name="row">The row to read from</param>
+        /// <param name="type">The type of row</param>
+        /// <returns></returns>
         public Player ReadPlayerRow(IWebElement row, PlayerTable type)
         {
             int pBioBoxDivNum = 0;
@@ -119,12 +168,12 @@ namespace ESPNBot
                 case PlayerTable.FreeAgent:
                     pBioBoxDivNum = 1;
                     projDivNum = 6;
-                    isMovable = IsFreeAgentClickable(row);
+                    isMovable = IsFreeAgentClickable(row, true);
                     break;
                 case PlayerTable.Roster:
                     pBioBoxDivNum = 2;
                     projDivNum = 6;
-                    isMovable = IsFreeAgentClickable(row);
+                    isMovable = IsRosterClickable(row);
                     break;
             }
             var pBioBox = row.FindElement(By.XPath($"td[{pBioBoxDivNum}]/div/div/div[2]/div"));
@@ -137,7 +186,12 @@ namespace ESPNBot
             return new Player(pBio.Item1, pBio.Item2, pBio.Item3, pBio.Item4, projected, isMovable);
         }
 
-        public Tuple<string, string, string, string> ReadPlayerBioBox(IWebElement pBioBox)
+        /// <summary>
+        /// Gets the following player information from a player bio: name, team, eligibility, position
+        /// </summary>
+        /// <param name="pBioBox">The bioBox to read from</param>
+        /// <returns>A tuple in the form (name, team, eligibility, position)</returns>
+        private Tuple<string, string, string, string> ReadPlayerBioBox(IWebElement pBioBox)
         {
             string elg = "AOK";
             string name = pBioBox.FindElement(By.XPath("./div[1]")).GetAttribute("title");
@@ -152,25 +206,44 @@ namespace ESPNBot
             return new Tuple<string, string, string, string>(name, team, elg, pos);
         }
 
+        /// <summary>
+        /// Clicks the tab for free agents of a position
+        /// </summary>
+        /// <param name="pos"></param>
         public void ClickPositionTab(Position pos)
         {
             positionMap.TryGetValue(pos, out string posAbbr);
 
-            var posTab = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
-                By.XPath($"//div[@id='filterSlotIds']/label[text()='{posAbbr}']")));
+            IWebElement posTab;
+            try
+            {
+                posTab = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
+                    By.XPath($"//div[@id='filterSlotIds']/label[text()='{posAbbr}']")));
+            } catch
+            {
+                throw new NotFoundException("The position tab for " + pos.ToString() + " could not be found");
+            }
             ScrollElementIntoView(posTab);
             posTab.Click();
             browserWait.Wait();
         }
 
+        /// <summary>
+        /// Clicks the free agent action button
+        /// </summary>
+        /// <param name="row">The row of the button</param>
         public void ClickFreeAgentAction(IWebElement row)
         {
-            var buttonNav = row.FindElement(By.XPath("./td[3]/div/div/div/button[1]"));
+            IWebElement buttonNav = row.FindElement(By.XPath("./td[3]/div/div/div/button[1]"));
             ScrollElementIntoView(buttonNav);
             buttonNav.Click();
             browserWait.Wait();
         }
 
+        /// <summary>
+        /// Clicks the roster action button
+        /// </summary>
+        /// <param name="row">The row of the button</param>
         public void ClickRosterAction(IWebElement row)
         {
             var buttonNav = row.FindElement(By.XPath("./td[3]/div/div/button"));
@@ -180,11 +253,24 @@ namespace ESPNBot
             
         }
 
-        public bool IsFreeAgentClickable(IWebElement row)
+        /// <summary>
+        /// Checks whether the free agent action button is clickable
+        /// </summary>
+        /// <param name="row">The row of the button</param>
+        /// <param name="useWaivers">Whether to accept waivers as valid</param>
+        /// <returns></returns>
+        public bool IsFreeAgentClickable(IWebElement row, bool useWaivers)
         {
             try
             {
-                row.FindElement(By.XPath("./td[3]/div/div/div/button[@title='Add']"));
+                if (useWaivers)
+                {
+                    row.FindElement(By.XPath("./td[3]/div/div/div/button[1]"));
+                }
+                else
+                {
+                    row.FindElement(By.XPath("./td[3]/div/div/div/button[@title='Add']"));
+                }
             } catch
             {
                 return false;
@@ -192,6 +278,11 @@ namespace ESPNBot
             return true;
         }
 
+        /// <summary>
+        /// Checks whether the roster action button is clickable
+        /// </summary>
+        /// <param name="row">The row of the button</param>
+        /// <returns></returns>
         public bool IsRosterClickable(IWebElement row)
         {
             try
@@ -205,6 +296,9 @@ namespace ESPNBot
             return true;
         }
 
+        /// <summary>
+        /// Logs in to espn.com
+        /// </summary>
         public void LogIn()
         {
             WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(4));
@@ -229,6 +323,9 @@ namespace ESPNBot
                 By.XPath("//*[@id='espn-analytics']/div/div[2]/div/div/nav/ul[3]/li[2]/div[1]")));
         }
 
+        /// <summary>
+        /// Clicks the continue button
+        /// </summary>
         public void ClickContinue()
         {
             var continueButton = driver.FindElement(By.XPath("//button/span[text()='Continue']"));
@@ -237,6 +334,9 @@ namespace ESPNBot
             browserWait.Wait();
         }
 
+        /// <summary>
+        /// Clicks the cancel button
+        /// </summary>
         public void ClickCancel()
         {
             var cancelButton = driver.FindElement(By.XPath("//button/span[text()='Cancel']"));
@@ -245,6 +345,9 @@ namespace ESPNBot
             browserWait.Wait();
         }
 
+        /// <summary>
+        /// Clicks the confirm button
+        /// </summary>
         public void ClickConfirm()
         {
             var confirmButton = driver.FindElement(By.XPath("//button/span[text()='Confirm']"));
@@ -253,6 +356,10 @@ namespace ESPNBot
             browserWait.Wait();
         }
 
+        /// <summary>
+        /// Scrolls an element to the center of the screen to make it clickable
+        /// </summary>
+        /// <param name="element">The element to center</param>
         public void ScrollElementIntoView(IWebElement element)
         {
             var executor = (IJavaScriptExecutor)driver;

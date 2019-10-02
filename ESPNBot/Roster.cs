@@ -5,8 +5,14 @@ using System.Text;
 
 namespace ESPNBot
 {
+    /// <summary>
+    /// Represents a fantasy football roster
+    /// </summary>
     class Roster
     {
+        /// <summary>
+        /// The mappings of positions to their allowable slots
+        /// </summary>
         static Dictionary<Position, int[]> positionMap = new Dictionary<Position, int[]>
         {
             { Position.Quarterback, new int[] { 0 } },
@@ -32,6 +38,10 @@ namespace ESPNBot
 
         public Roster(Roster roster) : this(roster.GetPlayers()) {  }
 
+        /// <summary>
+        /// From a list of players, set the starting lineup
+        /// </summary>
+        /// <param name="players">The list of players</param>
         private void SetStarters(Player[] players)
         {
             for (int i = 0; i < 9; i++)
@@ -55,6 +65,10 @@ namespace ESPNBot
             }
         }
 
+        /// <summary>
+        /// From a list of players, set the bench lineup
+        /// </summary>
+        /// <param name="players">The list of players</param>
         private void SetBench(Player[] players)
         {
             for (int i = 9; i < players.Length; i++)
@@ -154,6 +168,11 @@ namespace ESPNBot
             return -1;
         }
 
+        /// <summary>
+        /// Gets the player of a certain slot ID
+        /// </summary>
+        /// <param name="slot">The slot to retrieve</param>
+        /// <returns></returns>
         public Player GetPlayer(int slot)
         {
             if (slot < 0 || slot > 15)
@@ -169,6 +188,11 @@ namespace ESPNBot
             }
         }
 
+        /// <summary>
+        /// Gets a list of starters that cannot play, whether due to injury or bye
+        /// </summary>
+        /// <param name="currWeek">The current week</param>
+        /// <returns></returns>
         public List<int> IneligibleStarters(int currWeek)
         {
             var players = new List<int>();
@@ -183,12 +207,36 @@ namespace ESPNBot
             return players;
         }
 
+        /// <summary>
+        /// Gets the players contained by this roster
+        /// </summary>
+        /// <returns></returns>
         public Player[] GetPlayers()
         {
             Player[] players = new Player[16];
             Array.Copy(starters, players, 9);
             Array.Copy(bench, 0, players, 9, 7);
             return players;
+        }
+
+        /// <summary>
+        /// Replaces the slot of a player with a new player
+        /// </summary>
+        /// <param name="slot">The slot to replace</param>
+        /// <param name="p">The new player to add</param>
+        public void ReplacePlayer(int slot, Player p)
+        {
+            if (slot < 0 || slot > 15)
+            {
+                throw new ArgumentOutOfRangeException("Slot " + slot + " is not in the bounds of [0,15]");
+            }
+            if (slot < 9)
+            {
+                starters[slot] = p;
+            } else
+            {
+                bench[slot] = p;
+            }
         }
     }
 }

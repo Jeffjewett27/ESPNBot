@@ -5,6 +5,9 @@ using System.Threading;
 
 namespace ESPNBot
 {
+    /// <summary>
+    /// Waits for a period of time in between browser actions
+    /// </summary>
     class BrowserWait
     {
         private Random random;

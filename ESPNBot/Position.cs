@@ -4,6 +4,9 @@ using System.Text;
 
 namespace ESPNBot
 {
+    /// <summary>
+    /// Represents a player's position
+    /// </summary>
     enum Position
     {
         Quarterback,

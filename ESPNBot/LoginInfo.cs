@@ -5,6 +5,9 @@ using System.IO;
 
 namespace ESPNBot
 {
+    /// <summary>
+    /// References LoginInfo.txt for login credentials
+    /// </summary>
     static class LoginInfo
     {
         private const string path = @"C:\Users\jeffr\source\repos\ESPNBot\ESPNBot\LoginInfo.txt";

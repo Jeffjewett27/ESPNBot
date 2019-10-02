@@ -56,9 +56,9 @@ namespace ESPNBot
             roster.SwapPlayers(roster.GetPlayer(s1), roster.GetPlayer(s2));
         }
 
-        public void UpdatePlayer(Player player)
+        public Player UpdatePlayer(Player player)
         {
-            
+            return player;
         }
     }
 }

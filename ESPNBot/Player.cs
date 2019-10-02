@@ -4,8 +4,12 @@ using System.Text;
 
 namespace ESPNBot
 {
+    /// <summary>
+    /// Represents a fantasy football player
+    /// </summary>
     class Player : IComparable<Player>, IEquatable<Player>
     {
+        //Maps the espn abbrieviations to positions
         private static Dictionary<string, Position> positionMap = new Dictionary<string, Position>() {
             { "QB", Position.Quarterback },
             { "RB", Position.RunningBack },
@@ -14,7 +18,7 @@ namespace ESPNBot
             { "K", Position.Kicker },
             { "D/ST", Position.Defense }
         };
-
+        //Maps the eligibility strings to their eligibilities
         private static Dictionary<string, Eligibility> eligibilityMap = new Dictionary<string, Eligibility>()
         {
             { "AOK", Eligibility.AOK },
@@ -32,6 +36,11 @@ namespace ESPNBot
         public double projected;
         public bool isMovable;
 
+        /// <summary>
+        /// Represents a player object that consists only of a position
+        /// </summary>
+        /// <param name="p">The position</param>
+        /// <returns></returns>
         public static Player NullPlayer(Position p)
         {
             return new Player()
@@ -40,7 +49,7 @@ namespace ESPNBot
             };
         }
 
-        public Player() { }
+        private Player() { }
 
         public Player(string name, string team, Eligibility eligibility, Position position, double projected, bool isMovable)
         {
@@ -64,11 +73,21 @@ namespace ESPNBot
             byeWeek = Team.GetByeWeek(team);
         }
 
+        /// <summary>
+        /// Compares whether a player is better than the other
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns></returns>
         public int CompareTo(Player other)
         {
             return (int)((projected - other.projected) * 10);
         }
 
+        /// <summary>
+        /// Checks whether two players are equal in their information
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns></returns>
         public bool Equals(Player other)
         {
             if (other == null) return false;
@@ -81,11 +100,20 @@ namespace ESPNBot
             return n && t && e && b && p && pos;
         }
 
+        /// <summary>
+        /// Checks whether a player is null
+        /// </summary>
+        /// <returns></returns>
         public bool IsNull()
         {
             return name == default && team == default;
         }
 
+        /// <summary>
+        /// Checks whether a player is playing in the current week
+        /// </summary>
+        /// <param name="currWeek">The current week</param>
+        /// <returns></returns>
         public bool IsPlaying(int currWeek)
         {
             if (byeWeek == currWeek)
@@ -106,6 +134,11 @@ namespace ESPNBot
             return name + ": " + position.ToString() + "(" + team +")";
         }
 
+        /// <summary>
+        /// Gets the player position represented by an abbrieviation
+        /// </summary>
+        /// <param name="pos">The position abbrieviation</param>
+        /// <returns></returns>
         private Position GetPosition(string pos)
         {
             if (positionMap.TryGetValue(pos, out Position position))
@@ -118,6 +151,11 @@ namespace ESPNBot
             }
         }
 
+        /// <summary>
+        /// Returns the eligibility value of an abbrieviation
+        /// </summary>
+        /// <param name="elg">The eligibility abbrieviation</param>
+        /// <returns></returns>
         private Eligibility GetEligibility(string elg)
         {
             if (eligibilityMap.TryGetValue(elg, out Eligibility eligibility))

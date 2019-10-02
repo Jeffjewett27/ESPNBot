@@ -8,8 +8,8 @@ namespace ESPNBot
     {
         Player[] GetPlayers();
         Player GetPlayer(int slot);
-        void UpdatePlayer(Player player);
+        Player UpdatePlayer(Player player);
         void SwapPlayers(int s1, int s2);
-        void AddFreeAgent(Position pos, Player player);
+        void AddFreeAgent(Position pos, Player player, bool useWaivers);
     }
 }

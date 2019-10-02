@@ -91,14 +91,14 @@ namespace ESPNBot
                         if (starter.CompareTo(worst) < 0)
                         {
                             logger.Info(starter + "requires a free agent. " + starter + " is being dropped from roster");
-                            action = () => espnTeam.AddFreeAgent(starter.position, starter);
+                            action = () => espnTeam.AddFreeAgent(starter.position, starter, false);
                             actions.Enqueue(action);
                             roster.SwapPlayers(starter, Player.NullPlayer(starter.position));
                         } else
                         {
                             logger.Info(starter + "is being benched. " + worst + " is being dropped from roster for free agent.");
                             int slot = roster.GetPlayerSlot(worst);
-                            action = () => espnTeam.AddFreeAgent(sub.position, worst);
+                            action = () => espnTeam.AddFreeAgent(sub.position, worst, false);
                             actions.Enqueue(action);
                             Player nullP = Player.NullPlayer(sub.position);
                             roster.SwapPlayers(worst, nullP);

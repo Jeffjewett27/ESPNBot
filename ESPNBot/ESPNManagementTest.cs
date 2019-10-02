@@ -61,7 +61,7 @@ namespace ESPNBot
         {
             using (var test = new ESPNTeam())
             {
-                test.AddFreeAgent(Position.Kicker, new Player("Robbie Gould", "SF", Eligibility.AOK, Position.Kicker, 0, true));
+                test.AddFreeAgent(Position.TightEnd, new Player("Jordan Akins", "HOU", Eligibility.AOK, Position.TightEnd, 6.2, true), false);
             }
         }
 
