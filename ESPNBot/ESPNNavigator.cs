@@ -210,20 +210,14 @@ namespace ESPNBot
             WebDriverWait wait = new WebDriverWait(driver, TimeSpan.FromSeconds(4));
             var profileElement = wait.Until(SeleniumExtras.WaitHelpers.ExpectedConditions.ElementIsVisible(
                 By.XPath("//*[@id='espn-analytics']/div/div[2]/div/div/nav/ul[3]/li[2]/div[1]")));
-            Actions action = new Actions(driver);
-            action.MoveToElement(profileElement).Perform();
-            Thread.Sleep(100);
-            action.MoveByOffset(0, 200).MoveByOffset(0, 0).Perform();
-            Thread.Sleep(200);
             var loginElement = driver.FindElement(By.XPath("//*[@id='espn-analytics']/div/div[2]/div/div/nav/ul[3]/li[2]/div[2]/div/div/ul/li[3]"));
-            action.MoveToElement(loginElement).Perform();
-            Thread.Sleep(100);
-            action.Click(loginElement).Perform();
-            Thread.Sleep(500);
+            var executor = (IJavaScriptExecutor)driver;
+            executor.ExecuteScript("arguments[0].click();", loginElement);
+            browserWait.Wait();
             driver.SwitchTo().Frame("disneyid-iframe");
             var usernameElement = driver.FindElement(By.XPath("//input[@placeholder='Username or Email Address']"));
             usernameElement.SendKeys(LoginInfo.GetUsername());
-            Thread.Sleep(150);
+            browserWait.Wait();
             var passwordElement = driver.FindElement(By.XPath("//input[@placeholder='Password (case sensitive)']"));
             passwordElement.SendKeys(LoginInfo.GetPassword());
             passwordElement.SendKeys(Keys.Enter);

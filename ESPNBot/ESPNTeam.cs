@@ -199,7 +199,8 @@ namespace ESPNBot
         private void StartBrowser()
         {
             ChromeOptions options = new ChromeOptions();
-            //options.AddArgument("headless");
+            options.AddArgument("--headless");
+            options.AddArgument("--window-size=1300,800");
             driver = new ChromeDriver(@"C:\Program Files", options);
         }
 
